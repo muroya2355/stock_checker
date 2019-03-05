@@ -6,6 +6,46 @@ var YAxes = [];
 var symbols = [];
 // グラフを描画するチャートオブジェクト
 var myChart;
+// ダッシュボードに表示する企業一覧
+var companytable;
+
+function AddToDashboard(symbol) {
+	
+	var isFirstCommit = false;
+
+	if(!companytable) {
+		isFirstCommit = true;
+		companytable = document.createElement('table');
+		companytable.id = "company-table";
+		companytable.setAttribute("class", "table table-condensed");
+		companytable.setAttribute("class", "table table-borderless");
+	}
+
+	var row = companytable.insertRow(-1);
+	var td1 = row.insertCell(-1);
+	td1.setAttribute("class","col-xs-6");
+	td1.appendChild(document.createTextNode(symbol));
+
+	var td2 = row.insertCell(-1);
+	td2.setAttribute("class","col-xs-3");
+	// ボタンの生成
+	var btn2 = document.createElement('button');
+	btn2.type = 'button';
+	btn2.className = 'btn btn-primary btn-sm';
+	btn2.textContent = 'Detail';
+	td2.appendChild(btn2);
+
+	var td3 = row.insertCell(-1);
+	td3.setAttribute("class","col-xs-3");
+	// ボタンの生成
+	var btn3 = document.createElement('button');
+	btn3.type = 'button';
+	btn3.className = 'btn btn-danger btn-sm';
+	btn3.textContent = 'Delete';
+	td3.appendChild(btn3);
+
+	document.getElementById('company-list').appendChild(companytable);
+}
 
 // 株価の取得
 function GetStockPrice(symbol) {
@@ -47,19 +87,8 @@ function GetStockPrice(symbol) {
 	return stock_price;
 }
 
-// "Display stock price" ボタンを押したときに、株価グラフの描画
-document.getElementById("form-button").onclick = function() {
-
-	// キャンバスのコンテキストの取得
-	var ctx = document.getElementById("myChart").getContext("2d");
-
-	// フォームからシンボルを取得、配列に格納
-	var symbol = document.getElementById("symbol").value
-	symbols.push(symbol);
-
-	// 株価時系列データの取得
-	stock_price = GetStockPrice(symbol);
-	//console.log(stock_price);
+// グラフの描画
+function DrawChart(symbol, stock_price) {
 
 	// 取得したデータをデータセットに格納
 	DataSets.push({
@@ -95,6 +124,10 @@ document.getElementById("form-button").onclick = function() {
 		}
 	})
 
+	// キャンバスのコンテキストの取得
+	var ctx = document.getElementById("myChart").getContext("2d");
+	//ctx.canvas.height = 280;
+
 	// 既にグラフが描画されているときには
 	if (myChart) {
 		// データセットを置き換え、再描画する
@@ -112,6 +145,8 @@ document.getElementById("form-button").onclick = function() {
 				datasets : DataSets
 			},
 			options : {
+				responsive : true,
+				maintainAspectRatio : true,
 				scales : {
 					xAxes : [{
 						type : 'time',
@@ -131,17 +166,49 @@ document.getElementById("form-button").onclick = function() {
 			}}
 		});
 	}
+}
+
+// "Display stock price" ボタンを押したときに、株価グラフの描画
+document.getElementById("form-button").onclick = function() {
+
+	// フォームからシンボルを取得、配列に格納
+	var symbol = document.getElementById("symbol").value
+	symbols.push(symbol);
+
+	// ダッシュボードの表示
+	AddToDashboard(symbol);
+
+	// 株価時系列データの取得
+	stock_price = GetStockPrice(symbol);
+	//console.log(stock_price);
+
+	// グラフの描画
+	DrawChart(symbol, stock_price);
 
 }
 
-// リセットボタンを押したときに、データセット、グラフをクリアする
-document.getElementById("reset-button").onclick = function() {
-	symbol = [];
+function delete_chart() {
+	symbols = [];
 
 	DataSets = [];
 	YAxes = [];
 
-	myChart.clear();
+	companytable = null;
 
+	myChart.clear();
+	var cvs = document.getElementById("myChart");
+	var ctx = document.getElementById("myChart").getContext("2d");
+	ctx.clearRect(0, 0, cvs.width, cvs.height);
+
+	var ctables = document.getElementById('company-table');
+	//while(ctables.rows[0]) ctables.deleteRow(0);
+	if(ctables) {
+		document.getElementById('company-list').removeChild(ctables);
+	}
 	document.getElementById("symbol").value = "";
+};
+
+// リセットボタンを押したときに、データセット、グラフをクリアする
+document.getElementById("reset-button").onclick = function() {
+	delete_chart();
 }
