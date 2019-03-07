@@ -88,6 +88,8 @@ function DeleteFromDashboard(symbol) {
 
 function GetDetails(symbol) {
 
+	var companydetail = {};
+
 	var xmlHttpRequest = new XMLHttpRequest();
 		if (xmlHttpRequest) {
 			xmlHttpRequest.onreadystatechange = function(){
@@ -108,11 +110,18 @@ function GetDetails(symbol) {
 		// GETリクエストなのでbody部に何も送らない
 		xmlHttpRequest.send( null );
 
+		return companydetail;
+
 }
 
-function ShowDetail() {
+function ShowDetail(companydetail) {
 	// 要素を取得
 	var targetElement = document.getElementById("dialog") ;
+
+	var detailtable = document.getElementById("detail-table");
+	if(detailtable){
+		detailtable.remove();
+	}
 
 	// 詳細テーブルの作成
 	detailtable = document.createElement('table');
@@ -136,7 +145,6 @@ function ShowDetail() {
 
 	// 開く
 	targetElement.showModal();
-	companydetail = {};
 }
 
 // 詳細表示ボタンの生成
@@ -146,8 +154,8 @@ function cleate_detailbutton(symbol) {
 	btn2.className = 'btn btn-primary btn-sm';
 	btn2.textContent = 'Detail';
 	btn2.onclick = function() {
-		GetDetails(symbol);
-		ShowDetail();
+		var companydetail = GetDetails(symbol);
+		ShowDetail(companydetail);
 	};
 	return btn2;
 }
@@ -160,6 +168,7 @@ function cleate_deletebutton(symbol) {
 	btn3.textContent = 'Delete';
 	btn3.onclick = function() {
 		DeleteFromDashboard(symbol);
+		DeleteFromChart(symbol);
 	};
 	return btn3;
 }
@@ -219,6 +228,18 @@ function DrawChart(symbol, stock_price) {
 
 }
 
+function DeleteFromChart(symbol) {
+	clear_canvas();
+
+	delete_data(symbol);
+	
+	cleate_canvas();
+
+	var ctx = canvas.getContext("2d");
+
+	create_chart(ctx);
+}
+
 // データセット・グラフをクリア
 function ResetAll() {
 	clear_canvas();
@@ -263,8 +284,13 @@ function add_data(symbol, stock_price) {
 }
 
 function delete_data(symbol) {
-	delete DataSets[symbol];
-	delete YAxes[symbol];
+	var idx = 0;
+	for (i=0; i<DataSets.length; i++) {
+		if(DataSets[i].label.toLowerCase()==symbol.toLowerCase())
+			idx = i;
+	}
+	DataSets.splice(idx,1);
+	YAxes.splice(idx,1);
 }
 
 function clear_all_data() {
