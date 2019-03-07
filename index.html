@@ -63,9 +63,20 @@
 	</div>
 
 	<!-- グラフ描画用キャンバス -->
-	<canvas id="myChart" height="400" width="600"></canvas>
+	<div id="myChart_canvas"></div>
+
 	<!-- 株価取得、グラフ描画処理 -->
 	<script type="text/javascript" src="graph.js"></script>
+
+	<!--ダイアログの内容-->
+	<dialog id="dialog">
+		<h5>Company Information</h5>
+		<div id="detail_table"></div>
+		<div><p>
+			<button type="button" onclick="this.parentNode.parentNode.parentNode.close()">Register</button>
+			<button type="button" onclick="this.parentNode.parentNode.parentNode.close()">Close</button>
+		</p></div>
+	</dialog>
 
 </body>
 

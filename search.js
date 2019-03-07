@@ -1,5 +1,5 @@
 // 企業一覧オブジェクト一覧を格納する配列
-companylist = [];
+allcompanylist = [];
 
 // IEX API から企業一覧を取得、companylist に格納する関数
 function GetAllCompanies() {
@@ -11,7 +11,7 @@ function GetAllCompanies() {
 				if( this.readyState == 4 && this.status == 200 ){
 					if( this.response ){
 						// レスポンスをcompanylist に代入
-						companylist = this.response;
+						allcompanylist = this.response;
 						//console.log(companylist);
 
 		}}}}
@@ -30,13 +30,13 @@ GetAllCompanies();
 
 // キーワードからリアルタイムで企業を検索
 $(function () {
-	searchWord = function() {
+	SearchWord = function() {
 		// 検索結果の企業オブジェクトを格納する配列
 		var searchResult,
-				// formに入力されたテキスト（検索キーワード）
-				searchText = $(this).val(),
-				// 検索結果件数を表示するテキスト
-				hitNum;
+		// formに入力されたテキスト（検索キーワード）
+		searchText = $(this).val(),
+		// 検索結果件数
+		hitNum;
 
 		// 検索結果を空にする
 		searchResult = [];
@@ -49,16 +49,13 @@ $(function () {
 		if (searchText.length >= 3) {
 			
 			// 企業一覧から、シンボルと企業名で絞込み
-			var company = companylist.filter(function(item, index){
+			searchResult = allcompanylist.filter(function(item, index){
 				if (item.isEnabled==true && 
 						((item.name).toLowerCase().indexOf(searchText.toLowerCase())>=0 ||
 						(item.symbol).toLowerCase().indexOf(searchText.toLowerCase())>=0 ))
 						return true;
 			});
 			//console.log(company);
-
-			// 検索結果の格納
-			searchResult = company;
 			
 			// 検索結果の表示。各検索結果に対して
 			for (var i = 0; i < searchResult.length; i ++) {
@@ -74,12 +71,12 @@ $(function () {
 			}
 
 			// 検索結果件数の表示
-			hitNum = searchResult.length + ' results are found';
-			$('.search-result__hit-num').append(hitNum);
+			hitNum = searchResult.length;
+			$('.search-result__hit-num').append(hitNum + ' results are found');
 			
 		}
 	};
 
 	// 検索フォームのテキストに対して、キーワード検索を実施
-	$('#symbol').on('input', searchWord);
+	$('#symbol').on('input', SearchWord);
 })
