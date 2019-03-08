@@ -8,8 +8,6 @@ var symbols = [];
 var myChart;
 // ダッシュボードに表示する企業一覧
 var companytable;
-// 企業詳細を格納する配列
-//var companydetail = {};
 
 
 // "Display stock price" ボタンを押したときに、株価の取得、グラフの描画など
