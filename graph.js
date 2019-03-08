@@ -9,7 +9,7 @@ var myChart;
 // ダッシュボードに表示する企業一覧
 var companytable;
 // 企業詳細を格納する配列
-var companydetail = {};
+//var companydetail = {};
 
 
 // "Display stock price" ボタンを押したときに、株価の取得、グラフの描画など
@@ -73,8 +73,10 @@ function AddToDashboard(symbol) {
 	document.getElementById('company-list').appendChild(companytable);
 }
 
+// ダッシュボードから選択企業を削除する
 function DeleteFromDashboard(symbol) {
 
+	// 選択企業のインデックスを検索
 	var idx=0;
 	for(i=0; i<companytable.rows.length; i++) {
 		if(companytable.rows[i].cells[0].firstChild.data.toLowerCase()==symbol.toLowerCase())
@@ -86,6 +88,7 @@ function DeleteFromDashboard(symbol) {
 	document.getElementById('company-list').appendChild(companytable);
 };
 
+// 企業情報の取得
 function GetDetails(symbol) {
 
 	var companydetail = {};
@@ -114,6 +117,7 @@ function GetDetails(symbol) {
 
 }
 
+// 企業情報、登録ボタンの表示
 function ShowDetail(companydetail) {
 	// 要素を取得
 	var targetElement = document.getElementById("dialog") ;
@@ -153,8 +157,11 @@ function cleate_detailbutton(symbol) {
 	btn2.type = 'button';
 	btn2.className = 'btn btn-primary btn-sm';
 	btn2.textContent = 'Detail';
+	// ボタンがクリックされたとき、
 	btn2.onclick = function() {
+		// 企業情報の取得
 		var companydetail = GetDetails(symbol);
+		// 企業情報、登録ボタンの表示
 		ShowDetail(companydetail);
 	};
 	return btn2;
@@ -166,8 +173,11 @@ function cleate_deletebutton(symbol) {
 	btn3.type = 'button';
 	btn3.className = 'btn btn-danger btn-sm';
 	btn3.textContent = 'Delete';
+	// ボタンがクリックされたとき、
 	btn3.onclick = function() {
+		// ダッシュボードから当該企業を削除
 		DeleteFromDashboard(symbol);
+		// グラフから当該企業を削除
 		DeleteFromChart(symbol);
 	};
 	return btn3;
@@ -216,6 +226,7 @@ function GetStockPrice(symbol) {
 // グラフの描画
 function DrawChart(symbol, stock_price) {
 
+
 	clear_canvas();
 
 	cleate_canvas();
@@ -228,16 +239,19 @@ function DrawChart(symbol, stock_price) {
 
 }
 
+// 選択企業をグラフから削除
 function DeleteFromChart(symbol) {
-	clear_canvas();
 
 	delete_data(symbol);
+
+	clear_canvas();
 	
-	cleate_canvas();
+	if(symbols.length!=0) {
+		cleate_canvas();
 
-	var ctx = canvas.getContext("2d");
-
-	create_chart(ctx);
+		var ctx = canvas.getContext("2d");
+		create_chart(ctx);
+	}
 }
 
 // データセット・グラフをクリア
@@ -246,6 +260,7 @@ function ResetAll() {
 	clear_all_data();
 }
 
+// 株価データをデータセットに追加
 function add_data(symbol, stock_price) {
 
 	// 取得したデータをデータセットに格納
@@ -283,16 +298,19 @@ function add_data(symbol, stock_price) {
 	})
 }
 
+// データセットから選択企業の株価データを削除
 function delete_data(symbol) {
 	var idx = 0;
 	for (i=0; i<DataSets.length; i++) {
 		if(DataSets[i].label.toLowerCase()==symbol.toLowerCase())
 			idx = i;
 	}
+	symbols.splice(idx,1);
 	DataSets.splice(idx,1);
 	YAxes.splice(idx,1);
 }
 
+// 全てのデータをクリア
 function clear_all_data() {
 	symbols = [];
 
@@ -308,12 +326,14 @@ function clear_all_data() {
 	document.getElementById("symbol").value = "";
 }
 
+// キャンバスの生成
 function cleate_canvas(){
 	var canvas = document.createElement('canvas');
 	canvas.id = "canvas";
 	document.getElementById('myChart_canvas').appendChild(canvas);
 }
 
+// キャンバスの削除
 function clear_canvas() {
 
 	var canvas = document.getElementById("canvas");
@@ -326,6 +346,7 @@ function clear_canvas() {
 	}
 }
 
+// グラフの作成
 function create_chart(ctx) {
 
 	// Chart オブジェクトを作成、諸々の設定を行う
