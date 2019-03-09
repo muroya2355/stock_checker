@@ -62,6 +62,7 @@ $(function () {
 				// ボタンの生成
 				var btn = document.createElement('button');
 				btn.type = 'button';
+				btn.id = 'search_result_'+searchResult[i].symbol;
 				btn.className = 'btn btn-link btn-sm';
 				btn.textContent = searchResult[i].symbol+" ("+searchResult[i].name+")";
 				// ボタンクリック時に、検索フォームに企業シンボルを代入
@@ -80,3 +81,12 @@ $(function () {
 	// 検索フォームのテキストに対して、キーワード検索を実施
 	$('#symbol').on('input', SearchWord);
 })
+
+// 検索結果のクリア
+function clear_searchresult() {
+	document.getElementById("symbol").value = "";
+
+	// 検索結果表示エリアを空にする
+	$('#search-result__list').empty();
+	$('.search-result__hit-num').empty();
+}

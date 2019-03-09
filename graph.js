@@ -1,235 +1,42 @@
-// 株価データセットを格納する配列（[{時刻, 株価},...]）
-var DataSets = [];
+// グラフ描画用の株価データセット
+var _DataSets = [];
 // グラフのY軸設定
-var YAxes = [];
+var _YAxes = [];
 // 企業シンボルを格納する配列
-var symbols = [];
+var _symbols = [];
 // グラフを描画するチャートオブジェクト
-var myChart;
-// ダッシュボードに表示する企業一覧
-var companytable;
+var _myChart;
 
+// ダッシュボードに登録済の企業について、株価データを更新
+function UpdateChart(period){
 
-// "Display stock price" ボタンを押したときに、株価の取得、グラフの描画など
-document.getElementById("form-button").onclick = function() {
+	clear_canvas();
 
-	// フォームからシンボルを取得、配列に格納
-	var symbol = document.getElementById("symbol").value
-	symbols.push(symbol);
-
-	// 選択企業をダッシュボードに追加
-	AddToDashboard(symbol);
-
-	// 株価時系列データの取得
-	stock_price = GetStockPrice(symbol);
-
-	// グラフの描画
-	DrawChart(symbol, stock_price);
-
-}
-
-// リセットボタンを押したときに、データセット・グラフをクリアする
-document.getElementById("reset-button").onclick = function() {
-	ResetAll();
-}
-
-// 選択企業をダッシュボードに追加
-function AddToDashboard(symbol) {
-
+	clear_datasets();
 	
-	if(!companytable) {
-		// テーブルの生成
-		companytable = document.createElement('table');
-		companytable.id = "company-table";
-		companytable.setAttribute("class", "table table-condensed");
-		companytable.setAttribute("class", "table table-borderless");
+	cleate_canvas();
+
+	for(symbol of _symbols) {
+
+		// 株価時系列データの取得
+		var stock_price = GetStockPrice(symbol, period);
+		add_data(symbol, period, stock_price);
 	}
 
-	// 新規行の追加
-	var row = companytable.insertRow(-1);
+	var ctx = canvas.getContext("2d");
 
-	// １列目：企業名
-	var td1 = row.insertCell(-1);
-	td1.setAttribute("class","col-xs-6");
-	td1.appendChild(document.createTextNode(symbol));
+	create_chart(ctx);
 
-	// ２列目：詳細表示ボタン
-	var td2 = row.insertCell(-1);
-	td2.setAttribute("class","col-xs-3");
-	// 詳細表示ボタンの生成
-	var detailbutton = cleate_detailbutton(symbol);
-	td2.appendChild(detailbutton);
-
-	// ３列目：削除ボタン
-	var td3 = row.insertCell(-1);
-	td3.setAttribute("class","col-xs-3");
-	// 削除ボタンの生成
-	var deletebutton = cleate_deletebutton(symbol);
-	td3.appendChild(deletebutton);
-
-	// 生成したテーブルをダッシュボードに登録
-	document.getElementById('company-list').appendChild(companytable);
-}
-
-// ダッシュボードから選択企業を削除する
-function DeleteFromDashboard(symbol) {
-
-	// 選択企業のインデックスを検索
-	var idx=0;
-	for(i=0; i<companytable.rows.length; i++) {
-		if(companytable.rows[i].cells[0].firstChild.data.toLowerCase()==symbol.toLowerCase())
-			idx = i;
-	}
-	companytable.deleteRow(idx);
-	
-	// テーブルをダッシュボードに登録
-	document.getElementById('company-list').appendChild(companytable);
-};
-
-// 企業情報の取得
-function GetDetails(symbol) {
-
-	var companydetail = {};
-
-	var xmlHttpRequest = new XMLHttpRequest();
-		if (xmlHttpRequest) {
-			xmlHttpRequest.onreadystatechange = function(){
-				// 正常なレスポンスが返ってきた場合
-				if( this.readyState == 4 && this.status == 200 ){
-					if( this.response ){
-						try{
-							// レスポンスをcompanylist に代入
-							companydetail = JSON.parse(this.response);
-							//console.log(companydetail);
-						} catch (e) {
-							console.log(e);
-						}
-		}}}}
-
-		// IEX API に対してGETリクエストを送信
-		xmlHttpRequest.open( 'GET', 'https://api.iextrading.com/1.0/stock/'+symbol.toLowerCase()+'/company', false);
-		// GETリクエストなのでbody部に何も送らない
-		xmlHttpRequest.send( null );
-
-		return companydetail;
-
-}
-
-// 企業情報、登録ボタンの表示
-function ShowDetail(companydetail) {
-	// 要素を取得
-	var targetElement = document.getElementById("dialog") ;
-
-	var detailtable = document.getElementById("detail-table");
-	if(detailtable){
-		detailtable.remove();
-	}
-
-	// 詳細テーブルの作成
-	detailtable = document.createElement('table');
-	detailtable.setAttribute("class", "table table-condensed");
-	detailtable.setAttribute("class", "table table-borderless");
-	detailtable.id = "detail-table";
-
-	for (key in companydetail) {
-		// 新規行の追加
-		var row = detailtable.insertRow(-1);
-		// １列目：キー
-		var td1 = row.insertCell(-1);
-		td1.appendChild(document.createTextNode(key));
-		// ２列目：値
-		var td2 = row.insertCell(-1);
-		td2.appendChild(document.createTextNode(companydetail[key]));
-	}
-
-	// 生成したテーブルをダイアログに登録
-	document.getElementById("dialog").appendChild(detailtable);
-
-	// 開く
-	targetElement.showModal();
-}
-
-// 詳細表示ボタンの生成
-function cleate_detailbutton(symbol) {
-	var btn2 = document.createElement('button');
-	btn2.type = 'button';
-	btn2.className = 'btn btn-primary btn-sm';
-	btn2.textContent = 'Detail';
-	// ボタンがクリックされたとき、
-	btn2.onclick = function() {
-		// 企業情報の取得
-		var companydetail = GetDetails(symbol);
-		// 企業情報、登録ボタンの表示
-		ShowDetail(companydetail);
-	};
-	return btn2;
-}
-
-// 削除ボタンの生成
-function cleate_deletebutton(symbol) {
-	var btn3 = document.createElement('button');
-	btn3.type = 'button';
-	btn3.className = 'btn btn-danger btn-sm';
-	btn3.textContent = 'Delete';
-	// ボタンがクリックされたとき、
-	btn3.onclick = function() {
-		// ダッシュボードから当該企業を削除
-		DeleteFromDashboard(symbol);
-		// グラフから当該企業を削除
-		DeleteFromChart(symbol);
-	};
-	return btn3;
-}
-
-// 株価の取得
-function GetStockPrice(symbol) {
-
-	// {時刻, 株価} を格納する配列
-	var stock_price = [];
-
-	// リクエストの生成
-	var xmlHttpRequest = new XMLHttpRequest();
-	if (xmlHttpRequest) {
-		xmlHttpRequest.onreadystatechange = function(){
-			// 正常なレスポンスが返ってきたときに
-			if( this.readyState == 4 && this.status == 200 ){
-				if( this.response ){
-					// レスポンスをJSON形式でパース
-					var list = JSON.parse(this.response);
-					try {
-						// 各株価データに対し
-						for (i=0; i<list.length; i++) {
-							// 株価が正常な値の時に（株価が取得できていない時がある）
-							if (list[i].average > 10) {
-								// {時刻, 株価} の組を配列に格納
-								stock_price.push({
-									t : moment(list[i].date+" "+list[i].minute, "YYYYMMDD hh:mm"),
-									y : list[i].average
-								});
-							}
-						}
-					} catch (e) {
-						console.log(e);
-					}
-	}}}}
-
-	// API にアクセスし*非同期で*データを取得（非推奨）
-	xmlHttpRequest.open( 'GET', 'https://api.iextrading.com/1.0/stock/'+symbol.toLowerCase()+'/chart/1d', false );
-	xmlHttpRequest.send( null );
-
-	// 配列を返す
-	return stock_price;
 }
 
 // グラフの描画
-function DrawChart(symbol, stock_price) {
-
+function AddToChart(symbol, period, stock_price) {
 
 	clear_canvas();
 
 	cleate_canvas();
 
-	add_data(symbol, stock_price);
+	add_data(symbol, period, stock_price);
 
 	var ctx = canvas.getContext("2d");
 
@@ -244,7 +51,7 @@ function DeleteFromChart(symbol) {
 
 	clear_canvas();
 	
-	if(symbols.length!=0) {
+	if(_symbols.length!=0) {
 		cleate_canvas();
 
 		var ctx = canvas.getContext("2d");
@@ -252,21 +59,29 @@ function DeleteFromChart(symbol) {
 	}
 }
 
-// データセット・グラフをクリア
+// データセット・グラフ・ダッシュボード・検索結果をクリア
 function ResetAll() {
+
+	clear_dashboard();
+	clear_searchresult();
 	clear_canvas();
-	clear_all_data();
+
+	clear_datasets();
+	_companytable = null;
+	_symbols = [];
 }
 
 // 株価データをデータセットに追加
-function add_data(symbol, stock_price) {
-
+function add_data(symbol, period, stock_price) {
+	
 	// 取得したデータをデータセットに格納
-	DataSets.push({
+	_DataSets.push({
 		label : symbol,
 		data : stock_price,
-		fill : false,
 		yAxisID : symbol,
+		lineTension : 0,
+		fill : false,
+		pointRadius : period=='1m' ? 3 : 0 ,
 	});
 
 	// 時系列データの最大値、最小値を取得
@@ -274,7 +89,7 @@ function add_data(symbol, stock_price) {
 	smin = Math.min.apply(null, stock_price.map(function(o){return o.y;}));
 
 	// グラフのY軸の設定
-	YAxes.push({
+	_YAxes.push({
 		id : symbol,
 		type : 'linear',
 		ticks : {
@@ -299,48 +114,43 @@ function add_data(symbol, stock_price) {
 // データセットから選択企業の株価データを削除
 function delete_data(symbol) {
 	var idx = 0;
-	for (i=0; i<DataSets.length; i++) {
-		if(DataSets[i].label.toLowerCase()==symbol.toLowerCase())
+	for (i=0; i<_DataSets.length; i++) {
+		if(_DataSets[i].label.toLowerCase()==symbol.toLowerCase())
 			idx = i;
 	}
-	symbols.splice(idx,1);
-	DataSets.splice(idx,1);
-	YAxes.splice(idx,1);
+	_symbols.splice(idx,1);
+	_DataSets.splice(idx,1);
+	_YAxes.splice(idx,1);
 }
 
-// 全てのデータをクリア
-function clear_all_data() {
-	symbols = [];
-
-	DataSets = [];
-	YAxes = [];
-
-	companytable = null;
-
-	var ctables = document.getElementById('company-table');
-	if(ctables) {
-		document.getElementById('company-list').removeChild(ctables);
-	}
-	document.getElementById("symbol").value = "";
+// データセットのクリア
+function clear_datasets() {
+	_DataSets = [];
+	_YAxes = [];
 }
 
-// キャンバスの生成
+// キャンバスの生成、期間ボタンの表示
 function cleate_canvas(){
+
+	document.getElementById("period_buttons").hidden = false;
+
 	var canvas = document.createElement('canvas');
 	canvas.id = "canvas";
 	document.getElementById('myChart_canvas').appendChild(canvas);
 }
 
-// キャンバスの削除
+// キャンバスの削除、期間ボタンの非表示
 function clear_canvas() {
+
+	document.getElementById("period_buttons").hidden = true;
 
 	var canvas = document.getElementById("canvas");
 	if(canvas) {
 		document.getElementById('myChart_canvas').removeChild(canvas);
 		canvas.remove();
 	}
-	if(myChart) {
-		myChart.destroy();
+	if(_myChart) {
+		_myChart.destroy();
 	}
 }
 
@@ -348,31 +158,28 @@ function clear_canvas() {
 function create_chart(ctx) {
 
 	// Chart オブジェクトを作成、諸々の設定を行う
-	myChart = new Chart(ctx, {
+	_myChart = new Chart(ctx, {
 		// 折れ線グラフ
 		type : 'line',
 		data : {
-			datasets : DataSets
+			datasets : _DataSets
 		},
 		options : {
+			//animation : false,
 			responsive : true,
 			maintainAspectRatio : true,
 			scales : {
 				xAxes : [{
 					type : 'time',
-					time : {
-						unit : 'minute',
-						displayFormats : {
-							minute : 'hh:mm a'
-						}
-					},
+					//time : _time,
 					// 時刻に合わせて、横軸の目盛間隔を調整する
 					distribution : 'linear',
 					ticks : {
 						source : 'auto'
 					}
 				}],
-				yAxes : YAxes
+				yAxes : _YAxes
 		}}
 	});
 }
+
