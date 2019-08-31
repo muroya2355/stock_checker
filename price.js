@@ -37,7 +37,7 @@ function GetStockPrice(symbol, period) {
 	}}}}
 
 	// API にアクセスし*非同期で*データを取得（非推奨）
-	xmlHttpRequest.open( 'GET', 'https://api.iextrading.com/1.0/stock/'+symbol.toLowerCase()+'/chart/'+period, false );
+	xmlHttpRequest.open( 'GET', 'https://cloud.iexapis.com/stable/stock/'+symbol.toLowerCase()+'/chart/'+period+'?token=pk_9c97781015d04a6c9db41ff2843c16ab', false );
 	xmlHttpRequest.send( null );
 
 	// 配列を返す
@@ -56,12 +56,28 @@ function GetLatestPrice(symbol) {
 			// 正常なレスポンスが返ってきたときに
 			if( this.readyState == 4 && this.status == 200 ){
 				if( this.response ){
-					price = this.response;
+					//price = this.price;
+					
+					// レスポンスをJSON形式でパース
+					var list = JSON.parse(this.response);
+					try {
+						// 時刻の新しい株価データから
+						for (i=list.length-1; i>0; i--) {
+							// 株価が正常な値の時に
+							if (list[i].average > 10) {
+								price = list[i].average;
+								break;
+							}
+						}
+					} catch (e) {
+						console.log(e);
+					}
 
 	}}}}
 
 	// API にアクセスし*非同期で*データを取得（非推奨）
-	xmlHttpRequest.open( 'GET', 'https://api.iextrading.com/1.0/stock/'+symbol.toLowerCase()+'/price', false );
+	//xmlHttpRequest.open( 'GET', 'https://cloud.iexapis.com/stable/stock/'+symbol.toLowerCase()+'/price'+'?token=pk_9c97781015d04a6c9db41ff2843c16ab', false );
+	xmlHttpRequest.open( 'GET', 'https://cloud.iexapis.com/stable/stock/'+symbol.toLowerCase()+'/chart/1d?token=pk_9c97781015d04a6c9db41ff2843c16ab', false );
 	xmlHttpRequest.send( null );
 
 	// 配列を返す

@@ -17,7 +17,7 @@ function GetAllCompanies() {
 		}}}}
 
 		// IEX API に対してGETリクエストを送信
-		xmlHttpRequest.open( 'GET', 'https://api.iextrading.com/1.0/ref-data/symbols');
+		xmlHttpRequest.open( 'GET', 'https://cloud.iexapis.com/stable/ref-data/symbols?token=pk_9c97781015d04a6c9db41ff2843c16ab');
 		// JSON形式でパース
 		xmlHttpRequest.responseType = 'json';
 		// GETリクエストなのでbody部に何も送らない

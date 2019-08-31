@@ -79,7 +79,7 @@ function GetDetails(symbol) {
 		}}}}
 
 		// IEX API に対してGETリクエストを送信
-		xmlHttpRequest.open( 'GET', 'https://api.iextrading.com/1.0/stock/'+symbol.toLowerCase()+'/company', false);
+		xmlHttpRequest.open( 'GET', 'https://cloud.iexapis.com/stable/stock/'+symbol.toLowerCase()+'/company?token=pk_9c97781015d04a6c9db41ff2843c16ab', false);
 		// GETリクエストなのでbody部に何も送らない
 		xmlHttpRequest.send( null );
 
