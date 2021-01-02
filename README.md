@@ -32,7 +32,7 @@
 
 ## 画面遷移図
 
-<img src="./figure/pages_stchecker.png" width=50%>
+<img src="./figure/pages_stchecker.png" width=70%>
 
 ## テーブル設計
 
