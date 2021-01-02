@@ -1,0 +1,23 @@
+# 開発環境用 golang イメージ
+FROM golang:1.15.6 AS build_env
+
+WORKDIR /go/src/github.com/muroya2355/osake/go/
+
+RUN go get github.com/julienschmidt/httprouter
+RUN go get github.com/lib/pq
+RUN go get github.com/coreos/go-oidc
+RUN go get golang.org/x/oauth2
+RUN go get github.com/koron/go-dproxy
+
+ADD ./go .
+ENV CGO_ENABLED 0
+RUN go build -o osake
+
+# 実行環境用 alipne イメージ
+FROM alpine:3.8 AS run_env
+
+RUN mkdir /usr/local/osake/
+ADD  ./go/view /usr/local/osake/view
+
+COPY --from=build_env /go/src/github.com/muroya2355/osake/go/osake /usr/local/osake/osake
+

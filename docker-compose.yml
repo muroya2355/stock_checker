@@ -1,0 +1,68 @@
+# docker-compose のバージョン
+version: '3.7'
+
+# 各コンテナの情報
+services:
+
+# osake アプリケーション用
+
+  # postgres サービス
+  postgres:
+    # コンテナの名前
+    container_name: postgres-container
+    # Dockerfile のディレクトリパス
+    build:
+      context: .
+      dockerfile: ./docker/postgres/Dockerfile
+
+
+  # golang アプリケーション
+  # 開発環境用
+  osake-dev:
+    container_name: osake-dev-container
+    # postgres のコンテナとリンク
+    depends_on:
+      - postgres
+    # Dockerfile を指定
+    build:
+      context: .
+      dockerfile: ./docker/golang/Dockerfile
+      target: build_env
+    # ${GOPATH}/src をマウント
+    volumes:
+      - ./go:/go/src/github.com/muroya2355/osake/go/
+    # $ docker exec -it osake-dev-container bash
+    # $ go run main.go
+    tty: true
+    # docker-compose run 実行時に実行されるコマンド
+    # command: bash -c "go build -o osake && ./osake"
+
+  # golang アプリケーション
+  # 実行環境用
+  osake:
+    container_name: osake-run-container
+    depends_on:
+      - postgres
+    build:
+      context: .
+      dockerfile: ./docker/golang/Dockerfile
+    command: sh -c "cd /usr/local/osake && ./osake"
+
+
+  # httpd サービス
+  httpd:
+    container_name: httpd-container
+    depends_on:
+      - postgres
+      - osake
+    build:
+      context: .
+      dockerfile: ./docker/httpd/Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # 設定ファイル (リバースプロキシ設定のため)
+      - ./docker/httpd/conf/httpd.conf:/usr/local/apache2/conf/httpd.conf
+      - ./docker/httpd/conf/extra/httpd-vhosts.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf
+      - ./docker/httpd/conf/extra/httpd-ssl.conf:/usr/local/apache2/conf/extra/httpd-ssl.conf
